@@ -1,4 +1,6 @@
 from subprocess import getstatusoutput as _getstatusoutput
+from urllib.request import urlopen as _urlopen
+from json import loads as _parseJSON
 import codecs as _codecs
 import os as _os
 
@@ -113,3 +115,20 @@ def debianize_name(name):
 
 def get_npmjs_homepage(name):
     return 'https://npmjs.com/package/' + name
+
+def get_package_in_new(module):
+    """
+    Check if package is available in NEW
+    """
+    content = []
+    url = "https://api.ftp-master.debian.org/sources_in_suite/new"
+    debug(1, "opening url %s" % url)
+    data = _urlopen(url).read().decode('utf-8')
+    data = _parseJSON(data)
+    for package in data:
+        name = package['source']
+        version = package['version']
+        if not module in name:
+            continue
+        content.append(package)
+    return content

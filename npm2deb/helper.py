@@ -8,6 +8,7 @@ import re as _re
 from npm2deb import Npm2Deb as _Npm2Deb
 from npm2deb.utils import debug as _debug
 from npm2deb.mapper import Mapper as _Mapper
+from npm2deb.utils import get_package_in_new as _get_package_in_new
 
 
 DO_PRINT = False
@@ -26,10 +27,7 @@ def search_for_repository(module):
     found = False
     result = {}
     my_print("Looking for existing repositories:")
-    content = _getstatusoutput(["rmadison -u debian node-"+module])
-    if content[1]:
-    	print(content[1]),
-    	found = True
+    
     for repo in repositories:
         _debug(1, "search for %s in %s" % (module, repo))
         url_base = "http://anonscm.debian.org/gitweb"
@@ -89,21 +87,13 @@ def search_in_new(module):
     _debug(1, "calling new-check")
     found = False
     formatted = "  {0:20} {1:>3}"
-    url = "https://api.ftp-master.debian.org/sources_in_suite/new"
-    _debug(1, "opening url %s" % url)
-    data = _urlopen(url).read().decode('utf-8')
-    data = _parseJSON(data)
-    result = []
-    for package in data:
-        name = package['source']
-        version = package['version']
-        if not module in name:
-            continue
+    result = _get_package_in_new(module)
+    if result:
         found = True
-        result.append(package)
-        my_print(formatted.format(package['source'],
-                                  package['version']
-                                 ))
+        my_print(formatted.format(result[0]['source'],
+                                  result[0]['version']
+                              ))
+        
     if not found:
         my_print("  None")
     return result
@@ -203,3 +193,5 @@ def search_for_builddep(module):
 def print_formatted_dependency(npm, debian, prefix=u''):
     formatted = u"{0:50}{1}"
     my_print(formatted.format(u"%s%s" % (prefix, npm), debian))
+
+

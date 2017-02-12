@@ -5,7 +5,7 @@ from subprocess import getstatusoutput as _getstatusoutput
 
 from npm2deb.utils import debug as _debug
 from npm2deb.utils import debianize_name as _debianize_name
-
+from npm2deb.utils import get_package_in_new as _get_package_in_new
 
 DB_URL = 'https://wiki.debian.org/Javascript/Nodejs/Database'
 
@@ -61,8 +61,15 @@ class Mapper(object):
             'rmadison -s sid "%s" | grep source' % result['name'])
 
         if madison[0] != 0:
-            result['name'] = None
-            return result
+            # checking if package is listed in NEW
+            in_new = _get_package_in_new(node_module)
+            if not in_new:
+                # Looking for package in debian experimental
+                madison = _getstatusoutput(["rmadison -u debian "\
+                                        + result['name']])
+                if madison[0] != 0:
+                    result['name'] = None
+                    return result
 
         tmp = madison[1].split('|')
         if len(tmp) >= 2:
